@@ -17,8 +17,11 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -43,11 +46,11 @@ public class PostMessage {
 
     private static final Logger log = LoggerFactory.getLogger(PostMessage.class);
 
-    private List<Map<String,Object>> todayData;
+    private List<Map<String,Object>> todayData = new ArrayList<>();
 
-    private List<Map<String,Object>> newData;
+    private List<Map<String,Object>> newData = new ArrayList<>();
 
-    @Scheduled(cron = "* * 9 * * *")
+    @Scheduled(cron = "0 0 9 * * *")
     public void getTodayData() throws NoSuchAlgorithmException, KeyManagementException, SlackApiException, IOException {
         todayData = getKstartUpData();
         sendSlackMessage(combineData(todayData));
@@ -57,17 +60,20 @@ public class PostMessage {
     @Scheduled(cron = "0/5 * * * * *")
     public void getNewData() throws NoSuchAlgorithmException, KeyManagementException, SlackApiException, IOException {
 
-        if(todayData == null){
+        if(todayData.isEmpty()){
             log.info("todayData가 없어서 새로 불러왔습니다");
             sendSlackMessage("슬랙봇을 시작했습니다");
             todayData = getKstartUpData();
+            sendSlackMessage(combineData(todayData));
         }
-
+        newData.clear();
         newData = getKstartUpData();
 
         if(!newData.get(0).get("title").equals(todayData.get(0).get("title"))){
             log.info("새로운 데이터가 있어서 slack에 출력합니다. ");
             sendSlackMessage(combineNewData(splitNewData()));
+            todayData.clear();
+            todayData = getKstartUpData();
         }
     }
 
@@ -144,6 +150,7 @@ public class PostMessage {
                 newMap.put("title",map.get("title"));
                 newMap.put("start_time",map.get("start_time"));
                 newMap.put("end_time",map.get("end_time"));
+                result.add(newMap);
             }
         }
         return result;
