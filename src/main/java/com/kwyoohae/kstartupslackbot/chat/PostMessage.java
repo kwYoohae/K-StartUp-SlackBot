@@ -57,7 +57,7 @@ public class PostMessage {
 
     }
 
-    @Scheduled(cron = "0/5 * * * * *")
+    @Scheduled(cron = "* 0/5 * * * *")
     public void getNewData() throws NoSuchAlgorithmException, KeyManagementException, SlackApiException, IOException {
 
         if(todayData.isEmpty()){
